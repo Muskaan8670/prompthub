@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { Prompt } from "./types";
+import { Prompt, DEFAULT_CATEGORIES, DEMO_PROMPTS } from "./types";
 
 interface PromptContextType {
   prompts: Prompt[];
@@ -24,7 +24,26 @@ export function PromptProvider({ children }: { children: React.ReactNode }) {
   const [categories, setCategories] = useState<string[]>([]);
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" | "info" } | null>(null);
 
-  // Helper to trigger UI success/error notification banners
+  // Load from localStorage on mount
+  useEffect(() => {
+    const storedPrompts = localStorage.getItem("prompt_library_prompts");
+    const storedCategories = localStorage.getItem("prompt_library_categories");
+
+    if (storedPrompts) {
+      setPrompts(JSON.parse(storedPrompts));
+    } else {
+      setPrompts(DEMO_PROMPTS);
+      localStorage.setItem("prompt_library_prompts", JSON.stringify(DEMO_PROMPTS));
+    }
+
+    if (storedCategories) {
+      setCategories(JSON.parse(storedCategories));
+    } else {
+      setCategories(DEFAULT_CATEGORIES);
+      localStorage.setItem("prompt_library_categories", JSON.stringify(DEFAULT_CATEGORIES));
+    }
+  }, []);
+
   const showToast = (message: string, type: "success" | "error" | "info" = "success") => {
     setToast({ message, type });
     setTimeout(() => {
@@ -32,179 +51,73 @@ export function PromptProvider({ children }: { children: React.ReactNode }) {
     }, 3000);
   };
 
-  // 1. Initial Load: Fetch Prompts and Categories from API routes on mount
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [promptsRes, categoriesRes] = await Promise.all([
-          fetch("/api/prompts"),
-          fetch("/api/categories")
-        ]);
-
-        if (promptsRes.ok && categoriesRes.ok) {
-          const promptsData = await promptsRes.json();
-          const categoriesData = await categoriesRes.json();
-          setPrompts(promptsData);
-          setCategories(categoriesData);
-        }
-      } catch (err) {
-        console.error("Failed to load initial backend details:", err);
-      }
-    }
-    loadData();
-  }, []);
-
-  // 2. Create Prompt: HTTP POST to backend route
-  const addPrompt = async (newPromptData: Omit<Prompt, "id" | "createdAt" | "isFavorite">) => {
-    try {
-      const res = await fetch("/api/prompts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newPromptData),
-      });
-
-      if (res.ok) {
-        const createdPrompt = await res.json();
-        setPrompts((prev) => [createdPrompt, ...prev]);
-        showToast("Prompt added successfully!");
-      } else {
-        showToast("Failed to save prompt", "error");
-      }
-    } catch (err) {
-      showToast("Error connecting to server", "error");
-    }
+  const addPrompt = (newPromptData: Omit<Prompt, "id" | "createdAt" | "isFavorite">) => {
+    const newPrompt: Prompt = {
+      ...newPromptData,
+      id: "prompt-" + Date.now(),
+      createdAt: new Date().toISOString(),
+      isFavorite: false,
+    };
+    const updated = [newPrompt, ...prompts];
+    setPrompts(updated);
+    localStorage.setItem("prompt_library_prompts", JSON.stringify(updated));
+    showToast("Prompt added successfully!");
   };
 
-  // 3. Update Prompt Details: HTTP PUT to /api/prompts/[id]
-  const updatePrompt = async (updatedPrompt: Prompt) => {
-    try {
-      const res = await fetch(`/api/prompts/${updatedPrompt.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedPrompt),
-      });
-
-      if (res.ok) {
-        const saved = await res.json();
-        setPrompts((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
-        showToast("Prompt updated successfully!");
-      } else {
-        showToast("Failed to update prompt", "error");
-      }
-    } catch (err) {
-      showToast("Error connecting to server", "error");
-    }
+  const updatePrompt = (updatedPrompt: Prompt) => {
+    const updated = prompts.map((p) => (p.id === updatedPrompt.id ? updatedPrompt : p));
+    setPrompts(updated);
+    localStorage.setItem("prompt_library_prompts", JSON.stringify(updated));
+    showToast("Prompt updated successfully!");
   };
 
-  // 4. Delete Prompt: HTTP DELETE to /api/prompts/[id]
-  const deletePrompt = async (id: string) => {
-    try {
-      const res = await fetch(`/api/prompts/${id}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        setPrompts((prev) => prev.filter((p) => p.id !== id));
-        showToast("Prompt deleted successfully!", "info");
-      } else {
-        showToast("Failed to delete prompt", "error");
-      }
-    } catch (err) {
-      showToast("Error connecting to server", "error");
-    }
+  const deletePrompt = (id: string) => {
+    const updated = prompts.filter((p) => p.id !== id);
+    setPrompts(updated);
+    localStorage.setItem("prompt_library_prompts", JSON.stringify(updated));
+    showToast("Prompt deleted successfully!", "info");
   };
 
-  // 5. Toggle Favorite Status: HTTP PUT to /api/prompts/[id] updating only isFavorite field
-  const toggleFavorite = async (id: string) => {
-    const target = prompts.find((p) => p.id === id);
-    if (!target) return;
-
-    const updatedFavoriteStatus = !target.isFavorite;
-
-    try {
-      const res = await fetch(`/api/prompts/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isFavorite: updatedFavoriteStatus }),
-      });
-
-      if (res.ok) {
-        const saved = await res.json();
-        setPrompts((prev) => prev.map((p) => (p.id === saved.id ? saved : p)));
-        showToast(
-          updatedFavoriteStatus ? "Added to favorites!" : "Removed from favorites!",
-          "success"
-        );
+  const toggleFavorite = (id: string) => {
+    const updated = prompts.map((p) => {
+      if (p.id === id) {
+        const nextFav = !p.isFavorite;
+        showToast(nextFav ? "Added to favorites!" : "Removed from favorites!", "success");
+        return { ...p, isFavorite: nextFav };
       }
-    } catch (err) {
-      showToast("Error toggling favorite", "error");
-    }
+      return p;
+    });
+    setPrompts(updated);
+    localStorage.setItem("prompt_library_prompts", JSON.stringify(updated));
   };
 
-  // 6. Create Category: HTTP POST to /api/categories
   const addCategory = (categoryName: string): boolean => {
     const trimmed = categoryName.trim();
     if (!trimmed) return false;
-
     if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) {
       showToast("Category already exists!", "error");
       return false;
     }
-
-    // Call API async, update state immediately for smooth UI feedback
-    fetch("/api/categories", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: trimmed }),
-    }).then((res) => {
-      if (res.ok) {
-        setCategories((prev) => [...prev, trimmed]);
-        showToast("Category added successfully!");
-      } else {
-        showToast("Failed to add category", "error");
-      }
-    });
-
+    const updated = [...categories, trimmed];
+    setCategories(updated);
+    localStorage.setItem("prompt_library_categories", JSON.stringify(updated));
+    showToast("Category added successfully!");
     return true;
   };
 
-  // 7. Delete Category: HTTP DELETE to /api/categories?name=[name]
-  const deleteCategory = async (categoryName: string) => {
-    try {
-      const res = await fetch(`/api/categories?name=${encodeURIComponent(categoryName)}`, {
-        method: "DELETE",
-      });
-
-      if (res.ok) {
-        setCategories((prev) => prev.filter((c) => c !== categoryName));
-        showToast("Category deleted successfully!", "info");
-      } else {
-        showToast("Failed to delete category", "error");
-      }
-    } catch (err) {
-      showToast("Error connecting to server", "error");
-    }
+  const deleteCategory = (categoryName: string) => {
+    const updated = categories.filter((c) => c !== categoryName);
+    setCategories(updated);
+    localStorage.setItem("prompt_library_categories", JSON.stringify(updated));
+    showToast("Category deleted successfully!", "info");
   };
 
-  // 8. Reset Data to Defaults: HTTP POST to /api/reset
-  const resetToDefaults = async () => {
-    try {
-      const res = await fetch("/api/reset", {
-        method: "POST",
-      });
-
-      if (res.ok) {
-        // Trigger page reload to re-fetch defaults from backend
-        showToast("Reset completed successfully! Reloading...", "success");
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-      } else {
-        showToast("Failed to reset database", "error");
-      }
-    } catch (err) {
-      showToast("Error resetting database", "error");
-    }
+  const resetToDefaults = () => {
+    setPrompts(DEMO_PROMPTS);
+    setCategories(DEFAULT_CATEGORIES);
+    localStorage.setItem("prompt_library_prompts", JSON.stringify(DEMO_PROMPTS));
+    localStorage.setItem("prompt_library_categories", JSON.stringify(DEFAULT_CATEGORIES));
+    showToast("Reset to sample data successfully!");
   };
 
   return (

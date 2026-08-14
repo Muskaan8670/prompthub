@@ -6,12 +6,9 @@ import {
   RefreshCw, 
   Download, 
   Upload, 
-  Trash2, 
   Plus, 
   X,
-  FileSpreadsheet,
-  Settings as SettingsIcon,
-  FolderPlus
+  Settings as SettingsIcon
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -25,7 +22,6 @@ export default function SettingsPage() {
   } = usePrompts();
 
   const [newCat, setNewCat] = useState("");
-  const [exportDataUrl, setExportDataUrl] = useState<string | null>(null);
 
   // Add custom category
   const handleAddCategory = (e: React.FormEvent) => {
@@ -58,24 +54,18 @@ export default function SettingsPage() {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = async (event) => {
+    reader.onload = (event) => {
       try {
         const parsed = JSON.parse(event.target?.result as string);
         if (parsed.prompts && Array.isArray(parsed.prompts)) {
-          const res = await fetch("/api/import", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(parsed),
-          });
-          
-          if (res.ok) {
-            showToast("Data imported successfully! Reloading page...", "success");
-            setTimeout(() => {
-              window.location.reload();
-            }, 1500);
-          } else {
-            showToast("Failed to import backup file.", "error");
+          localStorage.setItem("prompt_library_prompts", JSON.stringify(parsed.prompts));
+          if (parsed.categories && Array.isArray(parsed.categories)) {
+            localStorage.setItem("prompt_library_categories", JSON.stringify(parsed.categories));
           }
+          showToast("Data imported successfully! Reloading page...", "success");
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         } else {
           showToast("Invalid backup file structure.", "error");
         }
@@ -105,7 +95,7 @@ export default function SettingsPage() {
           <div className="bg-white border border-slate-200/80 rounded-3xl p-6 shadow-sm space-y-6">
             <div>
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-indigo-600" />
+                <SettingsIcon className="w-5 h-5 text-indigo-650" />
                 Manage Categories
               </h2>
               <p className="text-slate-550 text-xs mt-1">
