@@ -1,0 +1,81 @@
+{
+  "prompts": [
+    {
+      "id": "prompt-1786699886374",
+      "title": "WordPress Landing Page Content",
+      "category": "WordPress",
+      "tags": [
+        "wordpress",
+        "content"
+      ],
+      "content": "Create landing page content.\n\nInclude:\n- Hero Section\n- Features\n- Benefits\n- Testimonials\n- CTA\n\nBusiness Type:\n[BUSINESS]",
+      "isFavorite": true,
+      "createdAt": "2026-08-14T09:31:26.374Z"
+    },
+    {
+      "id": "prompt-1786699856214",
+      "title": "Client Requirement Analyzer",
+      "category": "General AI",
+      "tags": [
+        "client",
+        "analysis"
+      ],
+      "content": "Analyze the client requirements and provide:\n\n- Project Summary\n- Key Features\n- Suggested Tech Stack\n- Risks\n- Development Phases\n\nClient Requirements:\n[PASTE HERE]",
+      "isFavorite": false,
+      "createdAt": "2026-08-14T09:30:56.214Z"
+    },
+    {
+      "id": "prompt-1786699813037",
+      "title": "Daily Report Writer Modified",
+      "category": "Office Productivity",
+      "tags": [
+        "report",
+        "office",
+        "productivity"
+      ],
+      "content": "Write a professional daily work report.\n\nCompleted Tasks:\n[TASKS]\n\nPending Tasks:\n[PENDING]\n\nChallenges:\n[CHALLENGES]\n\nKeep it concise and professional.",
+      "isFavorite": true,
+      "createdAt": "2026-08-14T09:30:13.037Z",
+      "notes": "Modified"
+    },
+    {
+      "id": "prompt-1786699776729",
+      "title": "Next.js API Route Creator",
+      "category": "Next.js",
+      "tags": [
+        "nextjs",
+        "api",
+        "backend"
+      ],
+      "content": "Create a Next.js API Route using App Router.\n\nRequirements:\n- GET endpoint\n- Error handling\n- TypeScript\n- JSON response\n- Input validation\n\nEndpoint Purpose: [DESCRIPTION]",
+      "isFavorite": false,
+      "createdAt": "2026-08-14T09:29:36.729Z"
+    },
+    {
+      "id": "demo-1",
+      "title": "Generate React component from requirements",
+      "category": "React",
+      "tags": [
+        "React",
+        "TypeScript",
+        "TailwindCSS"
+      ],
+      "content": "Generate a clean React component.",
+      "isFavorite": true,
+      "createdAt": "2026-08-14T09:12:09.805Z"
+    }
+  ],
+  "categories": [
+    "Web Development",
+    "React",
+    "Next.js",
+    "Node.js",
+    "WordPress",
+    "UI/UX",
+    "Content Writing",
+    "Marketing",
+    "Office Productivity",
+    "General AI",
+    "Office Work"
+  ]
+}
